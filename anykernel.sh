@@ -4,7 +4,7 @@
 ### AnyKernel setup
 # global properties
 properties() { '
-kernel.string=Xtract kernel for AOSP LG V50/G8X
+kernel.string=KernelSU+SuSFS kernel for AOSP LG SM8150
 do.modules=0
 do.systemless=0
 do.cleanup=1
