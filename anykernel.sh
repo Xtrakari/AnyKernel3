@@ -37,6 +37,27 @@ if [ -L "/dev/block/bootdevice/by-name/init_boot_a" -o -L "/dev/block/by-name/in
     flash_boot # for devices with init_boot ramdisk
 else
     dump_boot # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
+
+    # -- Schedhorizon Governor Enforcement Injection --
+    if [ -d ramdisk ]; then
+        ui_print "Patching ramdisk init scripts for Schedhorizon..."
+        
+        # Target the common power initialization script found on SM8150 devices
+        if [ -f ramdisk/init.qcom.power.rc ]; then
+            TARGET_RC="ramdisk/init.qcom.power.rc"
+        else
+            TARGET_RC="ramdisk/init.rc"
+        fi
+        
+        # Append an asynchronous execution block triggered when boot finishes
+        cat << 'EOF' >> $TARGET_RC
+
+# Enforce Schedhorizon scaling governor fallback overwrite
+on property:sys.boot_completed=1
+    exec u:r:su:s0 root root -- /system/bin/sh -c "sleep 3; echo schedhorizon > /sys/devices/system/cpu/cpufreq/policy0/scaling_governor; echo schedhorizon > /sys/devices/system/cpu/cpufreq/policy4/scaling_governor; echo schedhorizon > /sys/devices/system/cpu/cpufreq/policy7/scaling_governor"
+EOF
+    fi
+    
     write_boot # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
 fi
 ## end boot install
